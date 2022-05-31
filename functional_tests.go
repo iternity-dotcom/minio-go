@@ -62,6 +62,7 @@ const (
 	accessKey      = "ACCESS_KEY"
 	secretKey      = "SECRET_KEY"
 	enableHTTPS    = "ENABLE_HTTPS"
+	skipSseTests   = "SKIP_SSE_TESTS"
 	enableKMS      = "ENABLE_KMS"
 )
 
@@ -11394,6 +11395,7 @@ func main() {
 	log.SetLevel(log.InfoLevel)
 
 	tls := mustParseBool(os.Getenv(enableHTTPS))
+	noSse := mustParseBool(os.Getenv(skipSseTests))
 	kms := mustParseBool(os.Getenv(enableKMS))
 	if os.Getenv(enableKMS) == "" {
 		// Default to KMS tests.
@@ -11463,7 +11465,7 @@ func main() {
 		testObjectTaggingWithVersioning()
 
 		// SSE-C tests will only work over TLS connection.
-		if tls {
+		if tls && !noSse {
 			testSSECEncryptionPutGet()
 			testSSECEncryptionFPut()
 			testSSECEncryptedGetObjectReadAtFunctional()
