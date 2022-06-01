@@ -28,7 +28,7 @@ func TestAddReplicationRule(t *testing.T) {
 		opts        Options
 		expectedErr string
 	}{
-		{ //test case :1
+		{ // test case :1
 			cfg: Config{},
 			opts: Options{
 				ID:           "xyz.id",
@@ -37,12 +37,11 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
 			expectedErr: "",
 		},
-		{ //test case :2
+		{ // test case :2
 			cfg: Config{},
 			opts: Options{
 				ID:           "",
@@ -51,12 +50,11 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
 			expectedErr: "rule state should be either [enable|disable]",
 		},
-		{ //test case :3
+		{ // test case :3
 			cfg: Config{Rules: []Rule{{Priority: 1}}},
 			opts: Options{
 				ID:           "xyz.id",
@@ -65,12 +63,11 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "1",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
 			expectedErr: "priority must be unique. Replication configuration already has a rule with this priority",
 		},
-		{ //test case :4
+		{ // test case :4
 			cfg: Config{},
 			opts: Options{
 				ID:           "xyz.id",
@@ -79,13 +76,11 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
-			expectedErr: "invalid format for replication Arn",
+			expectedErr: "destination bucket needs to be in Arn format",
 		},
-		{ //test case :5
-
+		{ // test case :5
 			cfg: Config{},
 			opts: Options{
 				ID:           "xyz.id",
@@ -94,12 +89,11 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				DestBucket:   "arn:destbucket",
 			},
 			expectedErr: "destination bucket needs to be in Arn format",
 		},
-		{ //test case :6
+		{ // test case :6
 			cfg: Config{Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:targetbucket"},
 			opts: Options{
 				ID:           "xyz.id",
@@ -108,12 +102,11 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
-			expectedErr: "role ARN does not match existing configuration",
+			expectedErr: "",
 		},
-		{ //test case :7
+		{ // test case :7
 			cfg: Config{},
 			opts: Options{
 				ID:           "xyz.id",
@@ -122,13 +115,21 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				DestBucket:   "arn:aws:s3:::destbucket",
 			},
 			expectedErr: "",
 		},
-		{ //test case :8
-			cfg: Config{Rules: []Rule{{ID: "xyz.id", Destination: Destination{Bucket: "arn:aws:s3:::destbucket"}}}},
+		{ // test case :8
+			cfg: Config{
+				Rules: []Rule{
+					{
+						ID: "xyz.id",
+						Destination: Destination{
+							Bucket: "arn:aws:s3:::destbucket",
+						},
+					},
+				},
+			},
 			opts: Options{
 				ID:           "xyz.id",
 				Prefix:       "abc/",
@@ -136,8 +137,7 @@ func TestAddReplicationRule(t *testing.T) {
 				Priority:     "1",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
 			expectedErr: "a rule exists with this ID",
 		},
@@ -161,7 +161,7 @@ func TestEditReplicationRule(t *testing.T) {
 		opts        Options
 		expectedErr string
 	}{
-		{ //test case :1
+		{ // test case :1 edit a rule in older config with remote ARN in destination bucket
 			cfg: Config{
 				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				Rules: []Rule{{
@@ -169,7 +169,8 @@ func TestEditReplicationRule(t *testing.T) {
 					Priority:    1,
 					Filter:      Filter{Prefix: "xyz/"},
 					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-				}}},
+				}},
+			},
 			opts: Options{
 				ID:           "xyz.id",
 				Prefix:       "abc/",
@@ -177,12 +178,11 @@ func TestEditReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
-			expectedErr: "",
+			expectedErr: "invalid destination bucket for this rule",
 		},
-		{ //test case :2 mismatched rule id
+		{ // test case :2 mismatched rule id
 			cfg: Config{
 				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				Rules: []Rule{{
@@ -190,7 +190,8 @@ func TestEditReplicationRule(t *testing.T) {
 					Priority:    1,
 					Filter:      Filter{Prefix: "xyz/"},
 					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-				}}},
+				}},
+			},
 			opts: Options{
 				ID:           "xyz.id",
 				Prefix:       "abc/",
@@ -198,40 +199,40 @@ func TestEditReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
 			expectedErr: "rule with ID xyz.id not found in replication configuration",
 		},
-		{ //test case :3 missing rule id
+		{ // test case :3 missing rule id
 			cfg: Config{
 				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				Rules: []Rule{{
 					ID:          "xyz.id2",
 					Priority:    1,
 					Filter:      Filter{Prefix: "xyz/"},
-					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-				}}},
+					Destination: Destination{Bucket: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket"},
+				}},
+			},
 			opts: Options{
 				Prefix:       "abc/",
 				RuleStatus:   "enable",
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				DestBucket:   "arn:aws:s3:::destbucket",
+				DestBucket:   "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 			},
 			expectedErr: "rule ID missing",
 		},
-		{ //test case :4 different destination bucket
+		{ // test case :4 different destination bucket
 			cfg: Config{
-				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
+				Role: "",
 				Rules: []Rule{{
 					ID:          "xyz.id",
 					Priority:    1,
 					Filter:      Filter{Prefix: "xyz/"},
-					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-				}}},
+					Destination: Destination{Bucket: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket"},
+				}},
+			},
 			opts: Options{
 				ID:           "xyz.id",
 				Prefix:       "abc/",
@@ -239,12 +240,11 @@ func TestEditReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				DestBucket:   "arn:aws:s3:::differentbucket",
 			},
-			expectedErr: "the destination bucket must be same for all rules",
+			expectedErr: "invalid destination bucket for this rule",
 		},
-		{ //test case :5 invalid destination bucket arn format
+		{ // test case :5 invalid destination bucket arn format
 			cfg: Config{
 				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				Rules: []Rule{{
@@ -252,7 +252,8 @@ func TestEditReplicationRule(t *testing.T) {
 					Priority:    1,
 					Filter:      Filter{Prefix: "xyz/"},
 					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-				}}},
+				}},
+			},
 			opts: Options{
 				ID:           "xyz.id",
 				Prefix:       "abc/",
@@ -260,21 +261,20 @@ func TestEditReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				DestBucket:   "arn:destbucket",
 			},
 			expectedErr: "destination bucket needs to be in Arn format",
 		},
 
-		{ //test case :6 invalid rule status
+		{ // test case :6 invalid rule status
 			cfg: Config{
-				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				Rules: []Rule{{
 					ID:          "xyz.id",
 					Priority:    1,
 					Filter:      Filter{Prefix: "xyz/"},
 					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-				}}},
+				}},
+			},
 			opts: Options{
 				ID:           "xyz.id",
 				Prefix:       "abc/",
@@ -282,26 +282,27 @@ func TestEditReplicationRule(t *testing.T) {
 				Priority:     "3",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				DestBucket:   "arn:aws:s3:::destbucket",
 			},
 			expectedErr: "rule state should be either [enable|disable]",
 		},
-		{ //test case :7 another rule has same priority
+		{ // test case :7 another rule has same priority
 			cfg: Config{
-				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
-				Rules: []Rule{{
-					ID:          "xyz.id",
-					Priority:    0,
-					Filter:      Filter{Prefix: "xyz/"},
-					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-				},
+				Rules: []Rule{
+					{
+						ID:          "xyz.id",
+						Priority:    0,
+						Filter:      Filter{Prefix: "xyz/"},
+						Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
+					},
 					{
 						ID:          "xyz.id2",
 						Priority:    1,
 						Filter:      Filter{Prefix: "xyz/"},
 						Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
-					}}},
+					},
+				},
+			},
 			opts: Options{
 				ID:           "xyz.id",
 				Prefix:       "abc/",
@@ -309,10 +310,30 @@ func TestEditReplicationRule(t *testing.T) {
 				Priority:     "1",
 				TagString:    "k1=v1&k2=v2",
 				StorageClass: "STANDARD",
-				RoleArn:      "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
 				DestBucket:   "arn:aws:s3:::destbucket",
 			},
 			expectedErr: "priority must be unique. Replication configuration already has a rule with this priority",
+		},
+		{ // test case :8 ; edit a rule in older config
+			cfg: Config{
+				Role: "arn:minio:replication:eu-west-1:c5acb6ac-9918-4dc6-8534-6244ed1a611a:destbucket",
+				Rules: []Rule{{
+					ID:          "xyz.id",
+					Priority:    1,
+					Filter:      Filter{Prefix: "xyz/"},
+					Destination: Destination{Bucket: "arn:aws:s3:::destbucket"},
+				}},
+			},
+			opts: Options{
+				ID:           "xyz.id",
+				Prefix:       "abc/",
+				RuleStatus:   "enable",
+				Priority:     "3",
+				TagString:    "k1=v1&k2=v2",
+				StorageClass: "STANDARD",
+				DestBucket:   "arn:aws:s3:::destbucket",
+			},
+			expectedErr: "",
 		},
 	}
 
