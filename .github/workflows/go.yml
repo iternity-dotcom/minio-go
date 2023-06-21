@@ -1,12 +1,15 @@
-name: Go
+name: Build (Linux)
 
 on:
   pull_request:
     branches:
     - master
-  push:
-    branches:
-    - master
+
+# This ensures that previous jobs for the PR are canceled when the PR is
+# updated.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -14,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        go-version: [1.17.x, 1.18.x]
+        go-version: [1.19.x, 1.20.x]
         os: [ubuntu-latest]
     steps:
       - name: Set up Go ${{ matrix.go-version }} on ${{ matrix.os }}
@@ -30,11 +33,9 @@ jobs:
         env:
           MINT_MODE: full
           SERVER_ENDPOINT: localhost:9000
-          ACCESS_KEY: minio
-          SECRET_KEY: minio123
+          ACCESS_KEY: minioadmin
+          SECRET_KEY: minioadmin
           ENABLE_HTTPS: 1
-          MINIO_ACCESS_KEY: minio
-          MINIO_SECRET_KEY: minio123
           MINIO_KMS_MASTER_KEY: my-minio-key:6368616e676520746869732070617373776f726420746f206120736563726574
           SSL_CERT_FILE: /tmp/certs-dir/public.crt
           MINIO_CI_CD: true

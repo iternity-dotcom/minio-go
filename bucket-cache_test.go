@@ -21,7 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -75,11 +75,20 @@ func TestGetBucketLocationRequest(t *testing.T) {
 
 		// Set get bucket location always as path style.
 		targetURL := *c.endpointURL
-		targetURL.Path = path.Join(bucketName, "") + "/"
-		targetURL.RawQuery = urlValues.Encode()
+
+		isVirtualStyle := c.isVirtualHostStyleRequest(targetURL, bucketName)
+
+		var urlStr string
+		if isVirtualStyle {
+			urlStr = targetURL.Scheme + "://" + bucketName + "." + targetURL.Host + "/?location"
+		} else {
+			targetURL.Path = path.Join(bucketName, "") + "/"
+			targetURL.RawQuery = urlValues.Encode()
+			urlStr = targetURL.String()
+		}
 
 		// Get a new HTTP request for the method.
-		req, err := http.NewRequest(http.MethodGet, targetURL.String(), nil)
+		req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -279,7 +288,7 @@ func TestGetBucketLocationRequest(t *testing.T) {
 // generates http response with bucket location set in the body.
 func generateLocationResponse(resp *http.Response, bodyContent []byte) (*http.Response, error) {
 	resp.StatusCode = http.StatusOK
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyContent))
+	resp.Body = io.NopCloser(bytes.NewBuffer(bodyContent))
 	return resp, nil
 }
 

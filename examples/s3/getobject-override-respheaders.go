@@ -18,10 +18,11 @@
  * limitations under the License.
  */
 
-package main
+package s3
 
 import (
 	"context"
+	"io"
 	"log"
 	"os"
 
@@ -30,8 +31,8 @@ import (
 )
 
 func main() {
-	// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname and
-	// my-objectname are dummy values, please replace them with original values.
+	// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname, my-objectname and
+	// my-testfile are dummy values, please replace them with original values.
 
 	// Requests are always secure (HTTPS) by default. Set secure=false to enable insecure (HTTP) access.
 	// This boolean value is the last argument for New().
@@ -46,19 +47,35 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	object, err := os.Open("my-testfile")
+	// response-cache-control=ResponseCacheControl
+	// response-content-disposition=ResponseContentDisposition
+	// response-content-encoding=ResponseContentEncoding
+	// response-content-language=ResponseContentLanguage
+	// response-content-type=ResponseContentType
+	// response-expires=ResponseExpires
+	opt := minio.GetObjectOptions{}
+	opt.SetReqParam("response-content-disposition", `attachment; filename="testing.txt"`)
+	opt.SetReqParam("response-cache-control", "No-cache")
+	opt.SetReqParam("response-content-encoding", "x-gzip")
+	opt.SetReqParam("response-expires", "Mon, 02 Jan 2006 15:04:05 GMT")
+	reader, err := s3Client.GetObject(context.Background(), "my-bucketname", "my-objectname", opt)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer object.Close()
-	objectStat, err := object.Stat()
+	defer reader.Close()
+
+	localFile, err := os.Create("my-testfile")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer localFile.Close()
+
+	stat, err := reader.Stat()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	info, err := s3Client.PutObject(context.Background(), "my-bucketname", "my-objectname", object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
-	if err != nil {
+	if _, err := io.CopyN(localFile, reader, stat.Size); err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Uploaded", "my-objectname", " of size: ", info.Size, "Successfully.")
 }

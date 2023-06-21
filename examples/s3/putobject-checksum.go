@@ -3,7 +3,7 @@
 
 /*
  * MinIO Go Library for Amazon S3 Compatible Cloud Storage
- * Copyright 2017 MinIO, Inc.
+ * Copyright 2015-2023 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +21,27 @@
 package main
 
 import (
-	"bytes"
 	"context"
+	"encoding/base64"
+	"hash/crc32"
 	"io"
 	"log"
+	"os"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/minio/minio-go/v7/pkg/encrypt"
 )
 
 func main() {
 	// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname and
 	// my-objectname are dummy values, please replace them with original values.
 
+	// Requests are always secure (HTTPS) by default. Set secure=false to enable insecure (HTTP) access.
+	// This boolean value is the last argument for New().
+
 	// New returns an Amazon S3 compatible client object. API compatibility (v2 or v4) is automatically
 	// determined based on the Endpoint value.
-	minioClient, err := minio.New("s3.amazonaws.com", &minio.Options{
+	s3Client, err := minio.New("s3.amazonaws.com", &minio.Options{
 		Creds:  credentials.NewStaticV4("YOUR-ACCESSKEYID", "YOUR-SECRETACCESSKEY", ""),
 		Secure: true,
 	})
@@ -45,29 +49,34 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	bucketName := "my-bucket"
-	objectName := "my-encrypted-object"
-	object := []byte("Hello again")
+	object, err := os.Open("putobject-checksum.go")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer object.Close()
+	objectStat, err := object.Stat()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// Create CRC32C:
+	crc := crc32.New(crc32.MakeTable(crc32.Castagnoli))
+	_, err = io.Copy(crc, object)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	meta := map[string]string{"x-amz-checksum-crc32c": base64.StdEncoding.EncodeToString(crc.Sum(nil))}
 
-	encryption := encrypt.DefaultPBKDF([]byte("my secret password"), []byte(bucketName+objectName))
-	_, err = minioClient.PutObject(context.Background(), bucketName, objectName, bytes.NewReader(object), int64(len(object)), minio.PutObjectOptions{
-		ServerSideEncryption: encryption,
-	})
+	// Reset object.
+	_, err = object.Seek(0, io.SeekStart)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	reader, err := minioClient.GetObject(context.Background(), bucketName, objectName, minio.GetObjectOptions{ServerSideEncryption: encryption})
+	// Upload object.
+	// Checksums are different with multipart, so we disable that.
+	info, err := s3Client.PutObject(context.Background(), "my-bucket", "my-objectname", object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream", UserMetadata: meta, DisableMultipart: true})
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer reader.Close()
-
-	decBytes, err := io.ReadAll(reader)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if !bytes.Equal(decBytes, object) {
-		log.Fatalln("Expected %s, got %s", string(object), string(decBytes))
-	}
+	log.Println("Uploaded", "my-objectname", "of size:", info.Size, "with CRC32C:", info.ChecksumCRC32C, "successfully.")
 }
