@@ -165,6 +165,7 @@ func TestIsValidEndpointURL(t *testing.T) {
 		{"https://s3-us-gov-west-1.amazonaws.com", nil, true},
 		{"https://s3-fips-us-gov-west-1.amazonaws.com", nil, true},
 		{"https://s3-fips.us-gov-west-1.amazonaws.com", nil, true},
+		{"https://s3-fips.us-gov-east-1.amazonaws.com", nil, true},
 		{"https://s3.amazonaws.com/", nil, true},
 		{"https://storage.googleapis.com/", nil, true},
 		{"https://z3.amazonaws.com", nil, true},
@@ -402,6 +403,27 @@ func TestIsAmzHeader(t *testing.T) {
 
 	for i, testCase := range testCases {
 		actual := isAmzHeader(testCase.header)
+		if actual != testCase.expectedValue {
+			t.Errorf("Test %d: Expected to pass, but failed", i+1)
+		}
+	}
+}
+
+// Tests if query parameter starts with "x-" and will be ignored by S3.
+func TestIsCustomQueryValue(t *testing.T) {
+	testCases := []struct {
+		// Input.
+		queryParamKey string
+		// Expected result.
+		expectedValue bool
+	}{
+		{"x-custom-key", true},
+		{"xcustom-key", false},
+		{"random-header", false},
+	}
+
+	for i, testCase := range testCases {
+		actual := isCustomQueryValue(testCase.queryParamKey)
 		if actual != testCase.expectedValue {
 			t.Errorf("Test %d: Expected to pass, but failed", i+1)
 		}
