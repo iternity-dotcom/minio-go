@@ -45,7 +45,7 @@ var DefaultRetryCap = time.Second
 
 // newRetryTimer creates a timer with exponentially increasing
 // delays until the maximum retry attempts are reached.
-func (c *Client) newRetryTimer(ctx context.Context, maxRetry int, unit time.Duration, cap time.Duration, jitter float64) <-chan int {
+func (c *Client) newRetryTimer(ctx context.Context, maxRetry int, unit, cap time.Duration, jitter float64) <-chan int {
 	attemptCh := make(chan int)
 
 	// computes the exponential backoff duration according to
@@ -118,6 +118,7 @@ var retryableHTTPStatusCodes = map[int]struct{}{
 	http.StatusBadGateway:          {},
 	http.StatusServiceUnavailable:  {},
 	http.StatusGatewayTimeout:      {},
+	520:                            {}, // It is used by Cloudflare as a catch-all response for when the origin server sends something unexpected.
 	// Add more HTTP status codes here.
 }
 

@@ -56,14 +56,15 @@ func (r ReplicationStatus) Empty() bool {
 // AdvancedPutOptions for internal use - to be utilized by replication, ILM transition
 // implementation on MinIO server
 type AdvancedPutOptions struct {
-	SourceVersionID    string
-	SourceETag         string
-	ReplicationStatus  ReplicationStatus
-	SourceMTime        time.Time
-	ReplicationRequest bool
-	RetentionTimestamp time.Time
-	TaggingTimestamp   time.Time
-	LegalholdTimestamp time.Time
+	SourceVersionID          string
+	SourceETag               string
+	ReplicationStatus        ReplicationStatus
+	SourceMTime              time.Time
+	ReplicationRequest       bool
+	RetentionTimestamp       time.Time
+	TaggingTimestamp         time.Time
+	LegalholdTimestamp       time.Time
+	ReplicationValidityCheck bool
 }
 
 // PutObjectOptions represents options specified by user for PutObject call
@@ -76,6 +77,7 @@ type PutObjectOptions struct {
 	ContentDisposition      string
 	ContentLanguage         string
 	CacheControl            string
+	Expires                 time.Time
 	Mode                    RetentionMode
 	RetainUntilDate         time.Time
 	ServerSideEncryption    encrypt.ServerSide
@@ -152,6 +154,10 @@ func (opts PutObjectOptions) Header() (header http.Header) {
 		header.Set("Cache-Control", opts.CacheControl)
 	}
 
+	if !opts.Expires.IsZero() {
+		header.Set("Expires", opts.Expires.UTC().Format(http.TimeFormat))
+	}
+
 	if opts.Mode != "" {
 		header.Set(amzLockMode, opts.Mode.String())
 	}
@@ -188,6 +194,9 @@ func (opts PutObjectOptions) Header() (header http.Header) {
 	if opts.Internal.ReplicationRequest {
 		header.Set(minIOBucketReplicationRequest, "true")
 	}
+	if opts.Internal.ReplicationValidityCheck {
+		header.Set(minIOBucketReplicationCheck, "true")
+	}
 	if !opts.Internal.LegalholdTimestamp.IsZero() {
 		header.Set(minIOBucketReplicationObjectLegalHoldTimestamp, opts.Internal.LegalholdTimestamp.Format(time.RFC3339Nano))
 	}
@@ -203,7 +212,7 @@ func (opts PutObjectOptions) Header() (header http.Header) {
 	}
 
 	for k, v := range opts.UserMetadata {
-		if isAmzHeader(k) || isStandardHeader(k) || isStorageClassHeader(k) {
+		if isAmzHeader(k) || isStandardHeader(k) || isStorageClassHeader(k) || isValidReplicationEncryptionHeader(k) {
 			header.Set(k, v)
 		} else {
 			header.Set("x-amz-meta-"+k, v)
@@ -221,7 +230,7 @@ func (opts PutObjectOptions) Header() (header http.Header) {
 // validate() checks if the UserMetadata map has standard headers or and raises an error if so.
 func (opts PutObjectOptions) validate() (err error) {
 	for k, v := range opts.UserMetadata {
-		if !httpguts.ValidHeaderFieldName(k) || isStandardHeader(k) || isSSEHeader(k) || isStorageClassHeader(k) {
+		if !httpguts.ValidHeaderFieldName(k) || isStandardHeader(k) || isSSEHeader(k) || isStorageClassHeader(k) || isValidReplicationEncryptionHeader(k) {
 			return errInvalidArgument(k + " unsupported user defined metadata name")
 		}
 		if !httpguts.ValidHeaderFieldValue(v) {
